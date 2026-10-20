@@ -1,15 +1,11 @@
+# Generates listening clips with VOICEVOX. See "Generating more clips" in README.md.
 services:
   voicevox:
     image: voicevox/voicevox_engine:cpu-0.25.2
     restart: unless-stopped
     environment:
-      # Synthesis threads: 4 = all DS1019+ cores. Override when pre-generating on a bigger machine.
+      # Synthesis threads; set VV_THREADS to your CPU core count.
       VV_CPU_NUM_THREADS: ${VV_THREADS:-4}
-    # Lower CPU priority than DSM's own processes, and a memory ceiling (~450 MB in use).
-    cpu_shares: 256
-    mem_limit: 1536m
-    security_opt:
-      - no-new-privileges:true
 
   app:
     image: python:3.13-slim
@@ -21,43 +17,12 @@ services:
       # VOICEVOX style ids: 2 四国めたん, 8 春日部つむぎ, 11 玄野武宏, 13 青山龍星
       VOICES: "2,8,11,13"
       CACHE_DIR: /cache
-      # Pre-generate clips in the background until the cache holds this many (~100 KB each).
+      # Pre-generate clips in the background until the cache holds this many.
       STOCK_CAP: ${STOCK_CAP:-20000}
     volumes:
       - ./:/app:ro
       - ./cache:/cache
     ports:
-      # Only reachable from the NAS itself; DSM's reverse proxy forwards to it for access at home.
       - "127.0.0.1:18080:8080"
-    read_only: true
-    tmpfs:
-      - /tmp
-    mem_limit: 256m
-    security_opt:
-      - no-new-privileges:true
     depends_on:
       - voicevox
-
-  # Publishes the app on the internet through Tailscale Funnel: no open ports on
-  # the router, and visitors only ever reach the app, never DSM.
-  # Stop this container to take the public site offline; the app keeps running.
-  tailscale:
-    image: tailscale/tailscale:v1.102.5
-    hostname: jnum
-    restart: unless-stopped
-    environment:
-      # Only needed for the first login; the login is then kept in ./tailscale/state.
-      TS_AUTHKEY: ${TS_AUTHKEY:-}
-      # Use the key only when there's no saved login, so a revoked key can't break restarts.
-      TS_AUTH_ONCE: "true"
-      TS_HOSTNAME: jnum
-      TS_STATE_DIR: /var/lib/tailscale
-      TS_SERVE_CONFIG: /config/serve.json
-      TS_USERSPACE: "true"
-    volumes:
-      - ./tailscale/state:/var/lib/tailscale
-      - ./tailscale/serve.json:/config/serve.json:ro
-    security_opt:
-      - no-new-privileges:true
-    depends_on:
-      - app

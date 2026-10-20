@@ -4,3 +4,4 @@ cache/
 .env
 tailscale/state/
 __pycache__/
+nas/
