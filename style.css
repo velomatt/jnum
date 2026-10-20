@@ -117,15 +117,25 @@ main {
   border: 2px solid transparent;
 }
 
-/* Same box metrics as the input so the two lines read character for character. */
+/* Same box metrics as the input so the two lines read character for character.
+   The side padding leaves room for the Check button and keeps the text centered. */
+.answer,
+.input { padding-inline: 4.75rem; }
+
 .answer {
   margin-top: 1.25rem;
   padding-block: 0;
   color: var(--bad);
 }
 
-.input {
+.input-wrap {
+  position: relative;
+  width: 100%;
   margin-top: 0.5rem;
+}
+
+.input {
+  display: block;
   border-color: var(--border);
   border-radius: 10px;
   background: var(--surface);
@@ -134,6 +144,24 @@ main {
   transition: border-color 0.15s, background-color 0.15s;
 }
 .input:focus { border-color: var(--accent); }
+
+/* Needed on iOS, whose number pad has no return key. */
+.check {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  padding: 0.45rem 0.8rem;
+  border: 0;
+  border-radius: 7px;
+  background: var(--accent);
+  color: var(--surface);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.check:disabled { opacity: 0.4; cursor: default; }
 .input.is-wrong {
   border-color: var(--bad);
   background: var(--bad-soft);
@@ -231,3 +259,8 @@ main {
   padding: 0 1px;
 }
 .seg-fix { color: var(--good); font-weight: 600; }
+
+@media (max-width: 520px) {
+  .answer,
+  .input { font-size: 1.2rem; padding-inline: 4.25rem; }
+}

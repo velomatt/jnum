@@ -32,10 +32,13 @@
       <div id="number" class="number"></div>
       <button id="play" class="play" type="button" aria-label="Replay (R)" hidden>🔊</button>
       <div id="answer" class="answer" lang="ja" hidden></div>
-      <input id="input" class="input" type="text" lang="ja"
-             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-             placeholder="ひらがなで入力" aria-label="Reading in hiragana">
-      <p id="hint" class="hint">Press Enter to submit</p>
+      <div class="input-wrap">
+        <input id="input" class="input" type="text" lang="ja" enterkeyhint="done"
+               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+               placeholder="ひらがなで入力" aria-label="Reading in hiragana">
+        <button id="check" class="check" type="button">Check</button>
+      </div>
+      <p id="hint" class="hint">Enter or Check to submit</p>
       <p id="status" class="status" hidden></p>
       <button id="previous" class="previous" type="button" hidden></button>
     </section>

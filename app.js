@@ -12,6 +12,7 @@
     play: $('play'),
     answer: $('answer'),
     input: $('input'),
+    check: $('check'),
     hint: $('hint'),
     status: $('status'),
     previous: $('previous'),
@@ -176,6 +177,7 @@
     els.answer.hidden = true;
     els.input.value = '';
     els.input.readOnly = false;
+    els.check.disabled = false;
     els.input.classList.remove('is-wrong', 'is-correct');
 
     if (state.drill === 'listen') {
@@ -222,6 +224,7 @@
   function advanceAfter(ms) {
     state.locked = true;
     els.input.readOnly = true;
+    els.check.disabled = true;
     setTimeout(newNumber, ms);
   }
 
@@ -365,9 +368,9 @@
 
     els.input.lang = listening ? 'en' : 'ja';
     els.input.inputMode = listening ? 'numeric' : 'text';
-    els.input.placeholder = listening ? 'Type the number you hear' : 'ひらがなで入力';
+    els.input.placeholder = listening ? 'Number you hear' : 'ひらがなで入力';
     els.input.setAttribute('aria-label', listening ? 'Number you hear' : 'Reading in hiragana');
-    els.hint.textContent = listening ? 'Enter to submit · R to replay' : 'Press Enter to submit';
+    els.hint.textContent = listening ? 'Enter or Check to submit · R to replay' : 'Enter or Check to submit';
 
     if (listening) loadClips().catch(() => {});
     else els.player.pause();
@@ -394,6 +397,13 @@
   });
 
   document.addEventListener('pointerdown', unlockAudio, { capture: true });
+
+  // Keep focus in the input so the on-screen keyboard stays open on phones.
+  els.check.addEventListener('pointerdown', e => e.preventDefault());
+  els.check.addEventListener('click', () => {
+    submit();
+    els.input.focus();
+  });
 
   els.play.addEventListener('click', () => {
     replay();
