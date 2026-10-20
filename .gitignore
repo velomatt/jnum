@@ -1,0 +1,6 @@
+# Generated / local-only
+cache/
+*.zip
+.env
+tailscale/state/
+__pycache__/

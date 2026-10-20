@@ -1,0 +1,107 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>jnum tests</title>
+<pre id="out"></pre>
+<script src="numbers.js"></script>
+<script>
+  const { toHiragana, toKanji, formatArabic, analyze, analyzeListening, randomNumber } = JNum;
+  const lines = [];
+  let failed = 0;
+  function eq(actual, expected, label) {
+    const a = JSON.stringify(actual), e = JSON.stringify(expected);
+    if (a !== e) { failed++; lines.push(`FAIL ${label}\n  got      ${a}\n  expected ${e}`); }
+  }
+
+  // Readings
+  const readings = {
+    10000: 'いちまん',
+    11111: 'いちまんせんひゃくじゅういち',
+    38300: 'さんまんはっせんさんびゃく',
+    43600: 'よんまんさんぜんろっぴゃく',
+    96800: 'きゅうまんろくせんはっぴゃく',
+    77777: 'ななまんななせんななひゃくななじゅうなな',
+    99999: 'きゅうまんきゅうせんきゅうひゃくきゅうじゅうきゅう',
+    20304: 'にまんさんびゃくよん',
+  };
+  for (const [n, r] of Object.entries(readings)) eq(toHiragana(+n), r, `reading ${n}`);
+
+  // Kanji / arabic
+  eq(toKanji(11111), '一万千百十一', 'kanji 11111');
+  eq(toKanji(38300), '三万八千三百', 'kanji 38300');
+  eq(toKanji(20304), '二万三百四', 'kanji 20304');
+  eq(formatArabic(38300), '38,300', 'arabic 38300');
+
+  // Short numbers
+  eq(toHiragana(300), 'さんびゃく', 'reading 300');
+  eq(toHiragana(8000), 'はっせん', 'reading 8000');
+  eq(toHiragana(1), 'いち', 'reading 1');
+  eq(toHiragana(10), 'じゅう', 'reading 10');
+  eq(toHiragana(1600), 'せんろっぴゃく', 'reading 1600');
+  eq(toKanji(8000), '八千', 'kanji 8000');
+  eq(toKanji(10), '十', 'kanji 10');
+  eq(formatArabic(3000), '3,000', 'arabic 3000');
+
+  // Random range and digit-count mix
+  const lengths = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  for (let i = 0; i < 20000; i++) {
+    const n = randomNumber();
+    if (n < 1 || n > 99999) { eq(n, 'in range', 'randomNumber'); break; }
+    lengths[String(n).length]++;
+  }
+  const share = d => lengths[d] / 20000;
+  eq([share(1) > 0.03 && share(1) < 0.07, share(2) > 0.08 && share(2) < 0.12, share(3) > 0.22 && share(3) < 0.28,
+      share(4) > 0.27 && share(4) < 0.33, share(5) > 0.27 && share(5) < 0.33], [true, true, true, true, true],
+     'digit-count mix ' + JSON.stringify(lengths));
+  eq(randomNumber(() => 0), 1, 'random min');
+  eq(randomNumber(() => 0.999999), 99999, 'random max');
+
+  // Classification
+  const cats = (n, s) => analyze(n, s).categories;
+  eq(analyze(38300, 'さんまんはっせんさんびゃく').correct, true, 'correct');
+  eq(analyze(38300, 'サンマンハッセンサンビャク').correct, true, 'katakana folds');
+  eq(analyze(38300, 'さんまん はっせん さんびゃく').correct, true, 'spaces ignored');
+  eq(cats(38300, 'さんまんはっせんさんひゃく'), ['missedSoundChange'], 'さんひゃく');
+  eq(cats(38300, 'さんまんはちせんさんびゃく'), ['missedSoundChange'], 'はちせん');
+  eq(cats(43600, 'よんまんさんぜんろくひゃく'), ['missedSoundChange'], 'ろくひゃく');
+  eq(cats(43600, 'よんまんさんせんろっぴゃく'), ['missedSoundChange'], 'さんせん');
+  eq(cats(24100, 'にまんよんぜんひゃく'), ['wrongSoundChange'], 'よんぜん');
+  eq(cats(24400, 'にまんよんせんよんびゃく'), ['wrongSoundChange'], 'よんびゃく');
+  eq(cats(43600, 'よんまんさんぜんろくぴゃく'), ['wrongSoundChange'], 'ろくぴゃく');
+  eq(cats(38300, 'さんまんはせんさんびゃく'), ['missingTsu'], 'はせん');
+  eq(cats(11100, 'いちまんせんいちひゃく'), ['extraIchi'], 'いちひゃく');
+  eq(cats(11100, 'いちまんいっせんひゃく'), ['extraIchi'], 'いっせん');
+  eq(cats(11100, 'まんせんひゃく'), ['missingIchi'], 'まん');
+  eq(cats(90009, 'きゅまんきゅう'), ['longVowel'], 'きゅ');
+  eq(cats(20010, 'にまんじゅ'), ['longVowel'], 'じゅ');
+  eq(cats(70000, 'しちまん'), ['variant'], 'しちまん');
+  eq(cats(40004, 'よんまんし'), ['variant'], 'し');
+  eq(cats(38300, 'さんまんななせんさんびゃく'), ['wrongDigit'], 'wrong digit');
+  eq(cats(38300, 'さんまんさんびゃく'), ['missingPlace'], 'missing place');
+  eq(cats(30300, 'さんまんはっせんさんびゃく'), ['extraPlace'], 'extra place');
+  eq(cats(38300, 'ばなな'), ['unrecognized'], 'unrecognized');
+  eq(cats(300, 'さんひゃく'), ['missedSoundChange'], 'short さんひゃく');
+  eq(cats(8000, 'はちせん'), ['missedSoundChange'], 'short はちせん');
+  eq(cats(100, 'いちひゃく'), ['extraIchi'], 'short いちひゃく');
+  eq(cats(38300, 'さんまんはちせんさんひゃく').sort(), ['missedSoundChange'], 'two misses, one category');
+  eq(analyze(38300, 'さんまんはちせんさんひゃく').segments.filter(s => s.issues.length).length, 2, 'two bad segments');
+
+  // Listening
+  const lcats = (n, s) => analyzeListening(n, s).categories;
+  eq(analyzeListening(38300, '38300').correct, true, 'listen correct');
+  eq(analyzeListening(38300, '38,300').correct, true, 'listen commas');
+  eq(analyzeListening(38300, '３８３００').correct, true, 'listen full-width');
+  eq(lcats(38300, '36300'), ['wrongDigit'], 'listen wrong digit');
+  eq(analyzeListening(38600, '38800').confusions, [{ place: 'hyaku', expected: 6, given: 8 }], 'listen confusion');
+  eq(lcats(38300, '30300'), ['missedPlace'], 'listen missed place');
+  eq(lcats(30300, '38300'), ['extraPlace'], 'listen extra place');
+  eq(lcats(38300, '3830'), ['wrongMagnitude'], 'listen magnitude low');
+  eq(lcats(38300, '383000'), ['wrongMagnitude'], 'listen magnitude high');
+  eq(lcats(38300, '3833'), ['wrongLength'], 'listen length');
+  eq(lcats(38300, 'abc'), ['unrecognized'], 'listen not a number');
+  eq(analyzeListening(600, '800').confusions, [{ place: 'hyaku', expected: 6, given: 8 }], 'listen 3-digit place');
+  eq(analyzeListening(3800, '3600').confusions, [{ place: 'hyaku', expected: 8, given: 6 }], 'listen 4-digit place');
+  eq(lcats(800, '8000'), ['wrongMagnitude'], 'listen short magnitude');
+
+  lines.unshift(failed ? `${failed} FAILED` : 'ALL PASSED');
+  document.getElementById('out').textContent = lines.join('\n');
+</script>

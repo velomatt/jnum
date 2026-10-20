@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>数字ドリル</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header class="bar">
+      <div class="controls">
+        <div class="toggle" role="group" aria-label="Drill mode">
+          <button type="button" data-drill="read" aria-pressed="true">Read</button>
+          <button type="button" data-drill="listen" aria-pressed="false">Listen</button>
+        </div>
+        <div id="display-toggle" class="toggle" role="group" aria-label="Number display">
+          <button type="button" data-mode="arabic" aria-pressed="true">123</button>
+          <button type="button" data-mode="kanji" aria-pressed="false" lang="ja">漢字</button>
+        </div>
+        <label id="speed-control" class="speed" hidden>
+          Speed <input id="speed" type="range" min="0.5" max="1.5" step="0.05" value="1">
+          <output id="speed-value">1.00×</output>
+        </label>
+      </div>
+      <div class="tally" aria-live="polite">
+        Correct <strong id="tally-correct">0</strong> / <strong id="tally-total">0</strong>
+      </div>
+    </header>
+
+    <section class="drill">
+      <div id="number" class="number"></div>
+      <button id="play" class="play" type="button" aria-label="Replay (R)" hidden>🔊</button>
+      <div id="answer" class="answer" lang="ja" hidden></div>
+      <input id="input" class="input" type="text" lang="ja"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+             placeholder="ひらがなで入力" aria-label="Reading in hiragana">
+      <p id="hint" class="hint">Press Enter to submit</p>
+      <p id="status" class="status" hidden></p>
+      <button id="previous" class="previous" type="button" hidden></button>
+    </section>
+
+    <details id="review" class="review">
+      <summary>Review (<span id="error-count">0</span> errors)</summary>
+      <div id="review-empty" class="muted">No errors yet.</div>
+      <ul id="category-counts" class="counts"></ul>
+      <table id="miss-table" class="misses" hidden>
+        <thead>
+          <tr><th>Number</th><th>Try</th><th>You typed</th><th>Correct</th><th>Error</th></tr>
+        </thead>
+        <tbody id="miss-rows"></tbody>
+      </table>
+    </details>
+
+    <footer id="credit" class="credit" lang="ja" hidden></footer>
+  </main>
+
+  <audio id="player" preload="auto"></audio>
+  <script src="numbers.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
